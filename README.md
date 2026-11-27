@@ -181,7 +181,10 @@ wrong. Piper says "OSI" as "oh-see", for example. Add the word to the
 
 Your scripts keep the normal spelling; only the audio changes. Matching is
 whole-word and case-sensitive. Tip: plurals of acronyms often need their
-own entry (`"NICs" = "nicks"`).
+own entry (`"NICs" = "nicks"`). Also check acronyms at the **end** of a
+sentence or clause: Piper may read them as a word there even when they
+sound fine mid-sentence ("or ESD." came out as "ezd"), so spell those out
+(`"ESD" = "E S D"`).
 
 ## 6. Re-record an episode
 
@@ -212,8 +215,10 @@ git push
 ```text
 study-podcast/
 ├── .github/workflows/publish.yml   the automation (GitHub Action)
+├── curriculum.md                   episode plan (A+ Core 1, Core 2) as a checklist
 ├── episodes/                       your scripts, one .txt per episode
-│   └── 001-osi-model.txt
+│   ├── 001-osi-model.txt
+│   └── 002-laptop-hardware.txt
 ├── audio/                          MP3s, created by the workflow (don't edit)
 ├── site/
 │   ├── index.html                  the web player page

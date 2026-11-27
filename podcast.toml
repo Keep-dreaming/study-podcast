@@ -61,7 +61,8 @@ loudness = -16
 # Matching is whole-word and case-sensitive. Your script stays readable;
 # only the audio changes. Add entries whenever something sounds off.
 "OSI"     = "O S I"
-"CompTIA" = "Comp T I A"
+"CompTIA" = "comp-tee-uh"   # "Comp T I A" came out as "comp tee eye uh"
+"A+"      = "A-plus"        # a bare "A" is read as the word "uh"
 "MAC"     = "mack"
 "VLAN"    = "V lan"
 "VLANs"   = "V lans"
@@ -73,3 +74,19 @@ loudness = -16
 "802.1Q"  = "eight oh two dot one Q"
 "802.3"   = "eight oh two dot three"
 "802.11"  = "eight oh two dot eleven"
+# A+ Core 1 hardware terms. Piper spells RAM and PIN letter by letter,
+# and says SODIMM as "sah-dim":
+"RAM"     = "ram"
+"PIN"     = "pin"
+"PINs"    = "pins"
+"SODIMM"  = "so dim"
+"SODIMMs" = "so dims"
+"DIMMs"   = "dims"          # "DIMMs." lost its s
+"ZIF"     = "ziff"
+# These read fine mid-sentence, but as a WORD at the end of a sentence
+# or clause ("or ESD." = "ezd", "or IR," = "er"), so spell them out:
+"ESD"     = "E S D"
+"IPS"     = "I P S"
+"VA"      = "V eh"          # "V A" would say "vee uh"
+"LED"     = "L E D"
+"IR"      = "I R"
