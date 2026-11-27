@@ -1,0 +1,219 @@
+# =====================================================================
+#  publish.yml: turns episode scripts into a podcast, automatically.
+#
+#  GitHub reads every .yml file in .github/workflows/ and runs it when
+#  its trigger (the "on:" section) happens. This one, on every push to
+#  main:
+#    1. finds episode scripts that have no MP3 yet
+#    2. speaks them with Piper and saves the MP3s into the repo
+#    3. builds the website + RSS feed
+#    4. publishes the website on GitHub Pages
+#
+#  Watch it run: the "Actions" tab of your repository on github.com.
+# =====================================================================
+
+# The name shown in the Actions tab.
+name: Publish podcast
+
+# ---------------------------------------------------------------------
+# WHEN to run.
+# ---------------------------------------------------------------------
+on:
+  # Every time commits are pushed to the main branch (this includes
+  # adding or editing a file on github.com, which is also a push).
+  push:
+    branches: [main]
+  # Adds a "Run workflow" button in the Actions tab, so you can re-run
+  # the whole thing by hand without changing any files.
+  workflow_dispatch:
+
+# ---------------------------------------------------------------------
+# Never run two copies at once. If you push twice quickly, the second
+# run waits in a queue for the first to finish (instead of both trying
+# to commit MP3s and deploy at the same time). cancel-in-progress: false
+# means a running job is never killed halfway through.
+# ---------------------------------------------------------------------
+concurrency:
+  group: publish-podcast
+  cancel-in-progress: false
+
+# ---------------------------------------------------------------------
+# A workflow is made of JOBS. Each job runs on its own fresh virtual
+# machine (a "runner") that is deleted afterwards. Nothing carries over
+# between runs unless we save it on purpose (the repo, a cache, or an
+# artifact). This workflow has two jobs: build, then deploy.
+# ---------------------------------------------------------------------
+jobs:
+
+  # ===================================================================
+  #  JOB 1: build. Make missing MP3s, then build the website.
+  # ===================================================================
+  build:
+    runs-on: ubuntu-latest   # a Linux virtual machine provided by GitHub
+
+    # What the automatic GITHUB_TOKEN may do in this job. We only grant
+    # what's needed (the "least privilege" rule): "contents: write" lets
+    # the job commit the new MP3 files back to the repository.
+    permissions:
+      contents: write
+
+    # Steps run one after another, top to bottom. "uses:" runs a ready-
+    # made action (shared code from GitHub's marketplace); "run:" runs
+    # shell commands. If any step fails, the later steps are skipped
+    # and the run shows a red X.
+    steps:
+
+      # Step 1: download the repository's files onto the runner.
+      # (The runner starts empty, it doesn't have your files yet.)
+      # ref: main fetches the NEWEST main, not the commit that started
+      # this run. That matters if this run waited in the queue while an
+      # earlier run committed MP3s: we see those MP3s and don't redo them.
+      - name: Check out the repository
+        uses: actions/checkout@v7
+        with:
+          ref: main
+
+      # Step 2: ask GitHub Pages for this site's public URL (we need it
+      # inside feed.xml). It also fails early with a clear error if
+      # Pages hasn't been switched on yet (see the README, step 1).
+      - name: Configure GitHub Pages
+        id: pages
+        uses: actions/configure-pages@v6
+
+      # Step 3: install Python. Ubuntu has a Python already, but it
+      # refuses "pip install" into the system Python, and this gives us
+      # a known version.
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      # Step 4: list the scripts in episodes/ that have no MP3 in
+      # audio/ yet. The script hands two values to later steps
+      # ("step outputs"), via the special $GITHUB_OUTPUT file:
+      #   steps.check.outputs.needed  -> "true" or "false"
+      #   steps.check.outputs.voice   -> the voice from podcast.toml
+      # The "id: check" is the name later steps use to read them.
+      # This also validates every script's header, so a typo fails here.
+      - name: Find scripts that still need an MP3
+        id: check
+        run: python scripts/make_audio.py --check
+
+      # Step 5: make sure ffmpeg is installed. It converts WAV to MP3,
+      # and its ffprobe tool measures each MP3's length for the feed.
+      # Some runner images include it; if not, we install it with apt
+      # (Ubuntu's package manager). "sudo" = run as administrator.
+      - name: Make sure ffmpeg is installed
+        run: |
+          if command -v ffmpeg > /dev/null; then
+            echo "ffmpeg is already installed: $(ffmpeg -version | head -n 1)"
+          else
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends ffmpeg
+          fi
+
+      # ---- Steps 6 to 10 only run when there is audio to make. ----
+      # "if:" is a condition. When it's false the step shows as skipped.
+      # That keeps runs fast (about 30 seconds) when you only edited,
+      # say, the README.
+
+      # Step 6: install Piper (pinned version in requirements.txt).
+      - name: Install Piper
+        if: steps.check.outputs.needed == 'true'
+        run: pip install -r requirements.txt
+
+      # Step 7: restore the voice model from the cache. The model is
+      # over 100 MB, so we keep a copy between runs. The "key" names the
+      # cached copy: it includes the voice name, so switching voices in
+      # podcast.toml automatically means a different cache entry.
+      # On a cache hit, voices/ is filled in and cache-hit is 'true'.
+      # On a miss, the cache action saves voices/ at the end of the job,
+      # so the next run gets a hit.
+      - name: Restore cached voice model
+        if: steps.check.outputs.needed == 'true'
+        id: voice-cache
+        uses: actions/cache@v6
+        with:
+          path: voices
+          key: piper-voice-${{ steps.check.outputs.voice }}
+
+      # Step 8: download the voice, but only on a cache miss.
+      # The value goes through an environment variable (VOICE) rather
+      # than pasting ${{ ... }} straight into the command. That's a good
+      # security habit: text is never turned into shell code by accident.
+      - name: Download the voice model (first run or new voice only)
+        if: steps.check.outputs.needed == 'true' && steps.voice-cache.outputs.cache-hit != 'true'
+        env:
+          VOICE: ${{ steps.check.outputs.voice }}
+        run: python3 -m piper.download_voices --download-dir voices "$VOICE"
+
+      # Step 9: the main event. Speak each missing script and save
+      # audio/<script name>.mp3. Takes a minute or two per episode.
+      - name: Generate the missing MP3s
+        if: steps.check.outputs.needed == 'true'
+        run: python scripts/make_audio.py
+
+      # Step 10: save the new MP3s into the repository, so the next run
+      # sees that these episodes are done and skips them.
+      #  - git config: commits need an author; we use GitHub's bot.
+      #  - "[skip ci]" in the message, plus the fact that pushes made
+      #    with GITHUB_TOKEN never trigger workflows, stops this commit
+      #    from starting another run (no infinite loop).
+      #  - git pull --rebase: if you pushed again while this ran, put
+      #    our commit on top of yours instead of failing.
+      # Because of this commit, run "git pull" before editing locally.
+      - name: Commit the new MP3s to the repository
+        if: steps.check.outputs.needed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add audio/
+          if git diff --cached --quiet; then
+            echo "No new audio files to commit."
+            exit 0
+          fi
+          git commit -m "Add generated episode audio [skip ci]"
+          git pull --rebase origin main
+          git push origin HEAD:main
+
+      # Step 11: build _site/ = index.html + cover + MP3s + feed.xml.
+      # base_url came from step 2, e.g.
+      # https://<username>.github.io/study-podcast
+      - name: Build the website and RSS feed
+        env:
+          SITE_URL: ${{ steps.pages.outputs.base_url }}
+        run: python scripts/build_site.py --base-url "$SITE_URL"
+
+      # Step 12: package _site/ as a "Pages artifact": a file bundle
+      # attached to this run, which the deploy job picks up.
+      - name: Upload the website for GitHub Pages
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+  # ===================================================================
+  #  JOB 2: deploy. Publish the uploaded website to GitHub Pages.
+  # ===================================================================
+  deploy:
+    # Wait for "build" to succeed first. Without "needs", jobs run at
+    # the same time.
+    needs: build
+    runs-on: ubuntu-latest
+
+    # Publishing to Pages requires exactly these two permissions:
+    # pages: write to deploy, id-token: write to prove to Pages that
+    # this request really comes from this repository's workflow.
+    permissions:
+      pages: write
+      id-token: write
+
+    # A deployment "environment". It gives you a deployment history,
+    # and shows the live site link on the run's summary page.
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

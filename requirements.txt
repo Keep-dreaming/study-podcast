@@ -1,0 +1,7 @@
+# Python packages the pipeline needs. Installed by the GitHub Action with:
+#   pip install -r requirements.txt
+#
+# piper-tts is the maintained Piper project (github.com/OHF-Voice/piper1-gpl).
+# The version is pinned so a future release can't silently change your
+# audio or break the build. To upgrade, change the number and push.
+piper-tts==1.8.0

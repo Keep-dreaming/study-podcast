@@ -1,0 +1,12 @@
+# Built website. Recreated on every run by scripts/build_site.py.
+_site/
+
+# Piper voice models (100+ MB each). Downloaded on demand and cached by
+# the GitHub Action; never committed.
+voices/
+
+# Python leftovers
+__pycache__/
+*.pyc
+.venv/
+venv/
