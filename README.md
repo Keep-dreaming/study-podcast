@@ -218,7 +218,8 @@ study-podcast/
 ├── curriculum.md                   episode plan (A+ Core 1, Core 2) as a checklist
 ├── episodes/                       your scripts, one .txt per episode
 │   ├── 001-osi-model.txt
-│   └── 002-laptop-hardware.txt
+│   ├── 002-laptop-hardware.txt
+│   └── 003-mobile-connectivity.txt
 ├── audio/                          MP3s, created by the workflow (don't edit)
 ├── site/
 │   ├── index.html                  the web player page

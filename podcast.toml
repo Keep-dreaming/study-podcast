@@ -90,3 +90,9 @@ loudness = -16
 "VA"      = "V eh"          # "V A" would say "vee uh"
 "LED"     = "L E D"
 "IR"      = "I R"
+# A+ mobile terms. Piper spells SIM and PAN mid-sentence but says them
+# as words at the end of a sentence, so make them always words:
+"SIM"     = "sim"
+"SIMs"    = "sims"
+"eSIM"    = "ee sim"
+"PAN"     = "pan"
