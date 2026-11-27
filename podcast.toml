@@ -1,0 +1,75 @@
+# =====================================================================
+#  podcast.toml: the ONE settings file for your study podcast.
+#
+#  Both Python scripts and the GitHub Action read this file, so any
+#  change you make here applies everywhere. Format is TOML:
+#    key = value     text goes in "quotes"     # starts a comment
+# =====================================================================
+
+[podcast]
+# Shown in AntennaPod and on the web page.
+title       = "Study Podcast"
+description = "Spoken study notes for certification prep, generated from plain-text scripts with Piper text-to-speech."
+author      = "Keep-dreaming"
+language    = "en-us"        # language code of the episodes
+category    = "Education"    # an Apple Podcasts category name
+explicit    = false
+
+# Cover art for podcast apps: a square PNG or JPG, 1400 to 3000 pixels.
+# The file lives in the site/ folder. Replace it with your own if you like.
+cover = "cover.png"
+
+
+[voice]
+# ---------------------------------------------------------------------
+#  THE VOICE. Change this one line to use a different Piper voice.
+#  Listen to all voices here: https://rhasspy.github.io/piper-samples/
+#  Format: <language>-<name>-<quality>, e.g. "en_US-lessac-medium",
+#  "en_GB-alan-medium", "en_US-amy-medium".
+#  New episodes use the new voice. Existing MP3s are NOT re-recorded
+#  (see "Re-record an episode" in the README).
+# ---------------------------------------------------------------------
+model = "en_US-ryan-high"
+
+# Speaking speed. 1.0 = the voice's normal pace, 1.1 = 10% slower,
+# 0.9 = 10% faster.
+length_scale = 1.05
+
+# Seconds of silence after each sentence, and between paragraphs
+# (a paragraph = text separated by a blank line in your script).
+sentence_pause  = 0.35
+paragraph_pause = 1.2
+
+# Seconds of silence for a bare [pause] marker in a script.
+# Use [pause 5] for exactly 5 seconds.
+default_marker_pause = 3.0
+
+
+[audio]
+# MP3 bitrate. 64k to 96k mono is plenty for a single speaking voice.
+# (64 kbps is about 0.5 MB per spoken minute.)
+bitrate = "64k"
+
+# Loudness target in LUFS. -16 is the usual podcast standard, so your
+# episodes play at about the same volume as other podcasts.
+loudness = -16
+
+
+[pronounce]
+# The voice reads some words wrong. List them here as
+#   "Word as written in your script" = "how to say it"
+# Matching is whole-word and case-sensitive. Your script stays readable;
+# only the audio changes. Add entries whenever something sounds off.
+"OSI"     = "O S I"
+"CompTIA" = "Comp T I A"
+"MAC"     = "mack"
+"VLAN"    = "V lan"
+"VLANs"   = "V lans"
+"NICs"    = "nicks"
+"PDUs"    = "P D U's"
+"TCP/IP"  = "TCP IP"
+"IPv4"    = "I P version 4"
+"IPv6"    = "I P version 6"
+"802.1Q"  = "eight oh two dot one Q"
+"802.3"   = "eight oh two dot three"
+"802.11"  = "eight oh two dot eleven"

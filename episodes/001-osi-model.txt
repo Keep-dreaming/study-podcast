@@ -1,0 +1,175 @@
+title: The OSI Model, Layer by Layer (Network+)
+description: A 15-minute listening guide to the seven layers of the OSI model for CompTIA Network+. What each layer does, the devices and protocols at each one, how encapsulation works, and a 5-question spoken quiz at the end.
+date: 2026-11-27
+---
+Hello, and welcome to Study Podcast. This episode is all about the OSI model, for the CompTIA Network+ exam.
+
+The OSI model shows up all over the exam. It also shows up at work, every time someone says, that sounds like a layer two problem. So it's worth knowing really well.
+
+Here's the plan for the next fifteen minutes. First, what the OSI model is, and why it exists. Second, a memory trick for the seven layers. Third, we'll walk through every layer, from the bottom to the top. Fourth, we'll look at encapsulation. That's how data travels down and up the layers. Fifth, we'll use the model to troubleshoot. And finally, there's a five question quiz.
+
+You don't need to take notes. Just listen. Every section ends with a short recap.
+
+[pause 1]
+
+Part one. What is the OSI model?
+
+OSI stands for Open Systems Interconnection. It's a reference model, created by the International Organization for Standardization.
+
+The model splits network communication into seven layers. Each layer has one job. Each layer serves the layer above it. And each layer relies on the layer below it.
+
+Why split it up? Because networking is complicated. Layers make it easier to understand. They let vendors build products that work together. And most of all, they make troubleshooting easier. When something breaks, you ask one question. Which layer is broken? That narrows the problem down fast.
+
+One important point. The OSI model is a way of thinking about networks. Real networks mostly run on the TCP/IP suite, which has its own, simpler model. But the exam, and most engineers, still talk in OSI layers. So layer three always means the OSI network layer.
+
+Let's recap part one. The OSI model is a seven layer reference model. Each layer has one job. We use it to understand networks, and to troubleshoot them, one layer at a time.
+
+[pause 1]
+
+Part two. Remembering the layers.
+
+The layers are numbered from the bottom. Layer one is at the bottom. Layer seven is at the top.
+
+From the bottom up, they are. Physical. Data Link. Network. Transport. Session. Presentation. Application.
+
+That's a lot to remember in order. So here's a memory trick. From the bottom up. Please Do Not Throw Sausage Pizza Away.
+
+Please, for Physical. Do, for Data Link. Not, for Network. Throw, for Transport. Sausage, for Session. Pizza, for Presentation. Away, for Application.
+
+Say it out loud a few times. It's worth it, because many exam questions name a layer only by its number.
+
+Recap of part two. Layer one is the bottom. Layer seven is the top. From the bottom up, Please Do Not Throw Sausage Pizza Away. Physical, Data Link, Network, Transport, Session, Presentation, Application.
+
+[pause 1]
+
+Part three. The layers, one at a time. We'll start at the bottom, with layer one.
+
+Layer one is the Physical layer. This is the layer you can touch. Its job is to move raw bits, ones and zeros, from one device to the next. It defines the signals. Electrical pulses on copper. Pulses of light on fiber. Radio waves for wireless.
+
+So at layer one, we care about cables, connectors, and signals. Think twisted pair copper cable, with RJ45 connectors. Think fiber optic cable. Devices that live here include hubs, repeaters, and media converters. A hub is a very simple device. Whatever comes in one port, it repeats out of every other port. It doesn't understand addresses at all.
+
+At this layer, the unit of data is simply the bit.
+
+Here's an exam tip. If a question mentions a damaged cable, a bad connector, interference, or no link light, think layer one.
+
+Recap. Layer one, Physical. Bits, cables, connectors, and signals. Hubs and repeaters.
+
+Now, layer two. The Data Link layer.
+
+Layer two moves data between devices on the same local network. It packages bits into frames. A frame wraps the data with a header at the front, and a trailer at the end. The trailer holds a check value, so the receiver can tell if the frame was damaged on the way.
+
+The key idea at layer two is the MAC address. MAC stands for Media Access Control. A MAC address is a forty eight bit hardware address, assigned to every network interface card. It's usually shown as twelve hexadecimal digits.
+
+Switches are the classic layer two device. A switch learns which MAC address lives on which port. Then it forwards each frame only to the port where the destination lives. That's much smarter than a hub. Bridges and wireless access points also work at layer two. So do network interface cards, also called NICs.
+
+The exam may also mention two sublayers of layer two. The upper one is called Logical Link Control, or LLC. The lower one is called Media Access Control. Yes, that's where the MAC address gets its name.
+
+VLANs also live at layer two. A VLAN splits one physical switch into several separate, logical networks. The standard for tagging VLAN traffic is called 802.1Q.
+
+Recap. Layer two, Data Link. Frames and MAC addresses. Switches, bridges, and network cards. Delivery within the same local network.
+
+Layer three. The Network layer.
+
+Layer two gets data across one local network. Layer three gets data across many networks. From your laptop, out through your router, across the internet, to a server on the other side of the world.
+
+Layer three uses logical addresses. In other words, IP addresses. Both IPv4 and IPv6 live here. At this layer, the unit of data is called a packet.
+
+The main job of layer three is routing. Routing means choosing a path through a series of networks. Routers are the classic layer three device. A router reads the destination IP address in each packet. It checks its routing table. Then it sends the packet on, toward the next hop. Layer three switches can route as well.
+
+One more protocol to know at layer three is ICMP. It's what the ping command uses, to test whether a host can be reached.
+
+Here's a classic exam question. A switch forwards traffic using MAC addresses. What does a router use? IP addresses. Switch, layer two. Router, layer three.
+
+Recap. Layer three, Network. Packets and IP addresses. Routers and routing. Moving data between networks.
+
+Layer four. The Transport layer.
+
+Layer three gets data to the right computer. Layer four gets it to the right application on that computer. It does this with port numbers. For example, secure web traffic normally uses port four four three.
+
+There are two main protocols at layer four. You need to know the difference. TCP, and UDP.
+
+TCP is connection oriented. Before it sends any data, it sets up a connection, using a three way handshake. SYN, SYN-ACK, and ACK. TCP numbers what it sends. The receiver confirms what arrived. And anything that was lost gets sent again. So TCP is reliable, but it has more overhead. Web pages, email, and file transfers all use TCP.
+
+UDP is connectionless. It just sends. No handshake. No confirmation. No resending. That sounds bad, but it makes UDP fast and lightweight. It's great for voice calls, live video, and DNS lookups. Those are cases where speed matters more than perfect delivery.
+
+The unit of data at layer four has a name too. For TCP, it's a segment. For UDP, it's usually called a datagram.
+
+Recap. Layer four, Transport. Port numbers. TCP is reliable and connection oriented, and sends segments. UDP is fast and connectionless, and sends datagrams.
+
+Now, the top three layers. These often blur together, so let's keep them simple.
+
+Layer five is the Session layer. It sets up, manages, and ends conversations between applications. Those conversations are called sessions. Examples you might see include remote procedure calls, and NetBIOS.
+
+Layer six is the Presentation layer. Think of it as the translator. It makes sure data arrives in a format the receiving application understands. That includes character encoding, like ASCII. It includes file formats, like JPEG images. It includes compression. And on the exam, it often includes encryption, such as SSL and TLS.
+
+Layer seven is the Application layer. This is the layer closest to the user. But here's the trap. Layer seven is not the application itself. It's not your web browser. It's the network services that applications use. HTTP and HTTPS, for the web. DNS, for turning names into IP addresses. DHCP, for handing out IP addresses automatically. SMTP, for sending email. FTP, for file transfers. And SSH, for secure remote logins.
+
+Recap of the top three. Layer five, Session. Starts, manages, and ends sessions. Layer six, Presentation. Formats, encodes, compresses, and encrypts. Layer seven, Application. The network services that programs use, like HTTP, DNS, and DHCP.
+
+[pause 1]
+
+Part four. Encapsulation. How data moves through the layers.
+
+When you send something, your data starts at the top, at layer seven. Then it travels down, all the way to layer one. On the way down, each layer adds its own header. This is called encapsulation.
+
+Picture a letter. You put it in an envelope, and write an address on it. Then you put that envelope inside a bigger envelope, with a new address. And then into another one. Each envelope is a header.
+
+Let's walk through it. At the top three layers, we just call it data. At layer four, the transport header is added, with the port numbers. Now it's a segment. At layer three, the IP header is added, with the IP addresses. Now it's a packet. At layer two, a header and a trailer are added, with the MAC addresses. Now it's a frame. And at layer one, the frame is sent as bits, across the wire, or through the air.
+
+At the other end, the reverse happens. The bits travel up, from layer one to layer seven. Each layer reads its own header, removes it, and hands the rest up to the next layer. This is called decapsulation.
+
+These names, data, segment, packet, frame, and bits, are called protocol data units. Or PDUs, for short. Here's one more memory trick, from the top down. Do Some People Fear Birthdays? Data, Segment, Packet, Frame, Bits.
+
+Recap of part four. Going down, each layer adds a header. That's encapsulation. Going up, each layer removes its header. That's decapsulation. Data, segment, packet, frame, bits. Do Some People Fear Birthdays.
+
+[pause 1]
+
+Part five. Using the model to troubleshoot.
+
+Here's a real world example. A user says they can't reach a website. Where do you start?
+
+One good method is to start at the bottom, and work up. Layer one. Is the cable plugged in? Is the link light on? Layer two. Is the switch port up? Is it on the right VLAN? Layer three. Does the computer have a valid IP address? Can it ping its default gateway? Then the upper layers. Is DNS turning the website's name into an address? Is the right port open on the server?
+
+This is called the bottom up approach. You can also go top down, starting with the application. Or you can start in the middle, at layer three, with a quick ping. That's called divide and conquer. If the ping works, the bottom three layers are probably fine, and you look higher. If it fails, you look lower.
+
+Recap of part five. Troubleshoot one layer at a time. Bottom up, top down, or divide and conquer. The key is to be methodical.
+
+[pause 1]
+
+And now, quiz time. Five questions. After each question, I'll pause for a few seconds, so you can answer out loud, or in your head. Then I'll give you the answer. If you need more time, just pause the episode.
+
+Question one. Name all seven layers of the OSI model, in order, starting from layer one.
+
+[pause 8]
+
+The answer. Physical, Data Link, Network, Transport, Session, Presentation, Application. Please Do Not Throw Sausage Pizza Away.
+
+Question two. A router forwards traffic based on what kind of address? And which layer does a router work at?
+
+[pause 6]
+
+The answer. A router uses IP addresses, and works at layer three, the Network layer.
+
+Question three. At layer two, what is the protocol data unit called?
+
+[pause 6]
+
+The answer. A frame. And a switch forwards frames using MAC addresses.
+
+Question four. Which transport protocol is connectionless, with no handshake? TCP, or UDP?
+
+[pause 6]
+
+The answer. UDP. TCP is the connection oriented one, with the three way handshake.
+
+Question five. A user can't connect to the network. You notice that the link light on their network card is off. Which layer of the OSI model should you check first?
+
+[pause 6]
+
+The answer. Layer one, the Physical layer. Check the cable, the connector, and the switch port.
+
+That's the quiz. If you missed any, replay that part of the episode. Repetition is how this sticks.
+
+One last recap of the whole episode. The OSI model has seven layers. From the bottom, Physical, Data Link, Network, Transport, Session, Presentation, and Application. Going down, data becomes segments, then packets, then frames, then bits. Hubs work at layer one. Switches at layer two. Routers at layer three. TCP and UDP at layer four. And when you troubleshoot, go one layer at a time.
+
+Thanks for listening, and good luck with your studies. See you in the next episode.

@@ -1,0 +1,186 @@
+<!doctype html>
+<!--
+  index.html: the backup "stream in a browser" page.
+
+  This file is static: it contains no episode data. When it opens in a
+  browser, the small script at the bottom downloads feed.xml (the same
+  RSS feed AntennaPod uses), reads the episodes from it, and shows each
+  one with an audio player. So there is only ONE source of truth, the
+  feed, and this page never needs rebuilding by hand.
+
+  To preview locally, after running scripts/build_site.py:
+      python3 -m http.server --directory _site 8000
+  then open http://localhost:8000 (opening the file directly won't work,
+  because browsers block loading feed.xml from file:// pages).
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Study Podcast</title>
+  <link rel="alternate" type="application/rss+xml" title="Podcast feed" href="feed.xml">
+  <link rel="icon" href="cover.png">
+  <style>
+    :root {
+      --bg: #f6f7fb; --card: #ffffff; --text: #1b1f2a; --muted: #5d6475;
+      --accent: #2f6fde; --accent-text: #ffffff; --border: #e2e5ee;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #11141b; --card: #1a1f2a; --text: #e8ebf2; --muted: #9aa3b5;
+        --accent: #6c9cff; --accent-text: #0d1220; --border: #2a3140;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    main { max-width: 720px; margin: 0 auto; padding: 24px 16px 64px; }
+    header { display: flex; gap: 16px; align-items: center; margin-bottom: 20px; }
+    header img { width: 96px; height: 96px; border-radius: 12px; flex: none; }
+    h1 { font-size: 1.6rem; margin: 0 0 4px; line-height: 1.2; }
+    header p { margin: 0; color: var(--muted); }
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px; margin-bottom: 16px;
+    }
+    .subscribe h2 { font-size: 1rem; margin: 0 0 8px; }
+    .feed-row { display: flex; gap: 8px; }
+    .feed-row input {
+      flex: 1; min-width: 0; padding: 8px 10px; font: inherit; font-size: .9rem;
+      color: var(--text); background: var(--bg);
+      border: 1px solid var(--border); border-radius: 8px;
+    }
+    .button {
+      display: inline-block; padding: 8px 14px; border: 0; border-radius: 8px;
+      background: var(--accent); color: var(--accent-text); font: inherit;
+      font-weight: 600; text-decoration: none; cursor: pointer; white-space: nowrap;
+    }
+    .subscribe .button.antennapod { margin-top: 12px; }
+    .hint { color: var(--muted); font-size: .875rem; margin: 10px 0 0; }
+    .episode h3 { font-size: 1.1rem; margin: 0 0 2px; line-height: 1.3; }
+    .meta { color: var(--muted); font-size: .875rem; margin: 0 0 8px; }
+    .episode p.desc { margin: 0 0 12px; }
+    audio { width: 100%; }
+    .status { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <img id="cover" src="cover.png" alt="">
+      <div>
+        <h1 id="title">Study Podcast</h1>
+        <p id="description"></p>
+      </div>
+    </header>
+
+    <section class="card subscribe">
+      <h2>Subscribe in a podcast app</h2>
+      <div class="feed-row">
+        <input id="feed-url" type="text" readonly aria-label="Feed URL">
+        <button class="button" id="copy" type="button">Copy</button>
+      </div>
+      <a class="button antennapod" id="antennapod" href="#">Open in AntennaPod</a>
+      <p class="hint">
+        On your phone, tap <b>Open in AntennaPod</b>. Or in AntennaPod tap
+        <b>Add podcast</b> &rarr; <b>Add podcast by RSS address</b> and paste
+        the feed URL above.
+      </p>
+    </section>
+
+    <section id="episodes">
+      <p class="status">Loading episodes&hellip;</p>
+    </section>
+  </main>
+
+  <script>
+    // Build the full feed URL from wherever this page is hosted.
+    const feedUrl = new URL("feed.xml", window.location.href).href;
+    document.getElementById("feed-url").value = feedUrl;
+    document.getElementById("antennapod").href =
+      "https://antennapod.org/deeplink/subscribe?url=" + encodeURIComponent(feedUrl);
+
+    document.getElementById("copy").addEventListener("click", async (event) => {
+      const input = document.getElementById("feed-url");
+      try {
+        await navigator.clipboard.writeText(input.value);
+      } catch {
+        input.select();
+        document.execCommand("copy");
+      }
+      event.target.textContent = "Copied!";
+      setTimeout(() => (event.target.textContent = "Copy"), 1500);
+    });
+
+    // Small helper to create an element with text (textContent is safe:
+    // it never interprets the text as HTML).
+    function el(tag, text, className) {
+      const node = document.createElement(tag);
+      if (text) node.textContent = text;
+      if (className) node.className = className;
+      return node;
+    }
+
+    function prettyDuration(hhmmss) {
+      const [h, m] = (hhmmss || "").split(":").map(Number);
+      if (Number.isNaN(m)) return "";
+      return h ? `${h} h ${m} min` : `${m} min`;
+    }
+
+    async function loadEpisodes() {
+      const list = document.getElementById("episodes");
+      try {
+        const response = await fetch("feed.xml", { cache: "no-cache" });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const xml = new DOMParser().parseFromString(await response.text(), "application/xml");
+        const ITUNES = "http://www.itunes.com/dtds/podcast-1.0.dtd";
+        const channel = xml.querySelector("channel");
+
+        const title = channel.querySelector(":scope > title")?.textContent || "Study Podcast";
+        document.title = title;
+        document.getElementById("title").textContent = title;
+        document.getElementById("description").textContent =
+          channel.querySelector(":scope > description")?.textContent || "";
+
+        const items = [...xml.querySelectorAll("item")];
+        list.replaceChildren();
+        if (items.length === 0) {
+          list.append(el("p", "No episodes yet. Add a script to the episodes/ folder.", "status"));
+          return;
+        }
+
+        for (const item of items) {
+          const enclosure = item.querySelector("enclosure");
+          const link = item.querySelector("link")?.textContent || "";
+          const date = new Date(item.querySelector("pubDate")?.textContent);
+          const duration = item.getElementsByTagNameNS(ITUNES, "duration")[0]?.textContent;
+
+          const card = el("article", null, "card episode");
+          card.id = decodeURIComponent(link.split("#")[1] || "");
+          card.append(el("h3", item.querySelector("title")?.textContent));
+          const meta = [
+            date.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }),
+            prettyDuration(duration),
+          ].filter(Boolean).join(" · ");
+          card.append(el("p", meta, "meta"));
+          const description = item.querySelector("description")?.textContent;
+          if (description) card.append(el("p", description, "desc"));
+
+          const audio = document.createElement("audio");
+          audio.controls = true;
+          audio.preload = "none"; // don't download until you press play
+          audio.src = enclosure?.getAttribute("url");
+          card.append(audio);
+          list.append(card);
+        }
+      } catch (error) {
+        list.replaceChildren(el("p", `Could not load feed.xml (${error.message}).`, "status"));
+      }
+    }
+
+    loadEpisodes();
+  </script>
+</body>
+</html>
